@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>販売先利益比較</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzRmNDZlNSIvPgogIDxyZWN0IHg9IjQiIHk9IjE4IiB3aWR0aD0iNiIgaGVpZ2h0PSIxMCIgcng9IjEuNSIgZmlsbD0iIzJlY2M3MSIvPgogIDxyZWN0IHg9IjEzIiB5PSIxMCIgd2lkdGg9IjYiIGhlaWdodD0iMTgiIHJ4PSIxLjUiIGZpbGw9IiNlNzRjM2MiLz4KICA8cmVjdCB4PSIyMiIgeT0iMTQiIHdpZHRoPSI2IiBoZWlnaHQ9IjE0IiByeD0iMS41IiBmaWxsPSIjYTc4YmZhIi8+CiAgPHJlY3QgeD0iNCIgeT0iNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjIiIHJ4PSIxIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMjUpIi8+Cjwvc3ZnPg==">
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f2f5; --surface:#ffffff; --s2:#f7f8fa; --s3:#eef0f3;
+  --bd:#e2e6ea; --bd2:#cdd2d8;
+  --tx:#1a1d23; --mu:#6b7280; --ac:#4f46e5;
+  --ac-bg:#eef2ff; --ac-bd:#c7d2fe;
+  --gn:#16a34a; --gn-bg:#f0fdf4; --gn-bd:#86efac;
+  --rd:#dc2626; --rd-bg:#fef2f2; --rd-bd:#fca5a5;
+  --yw:#b45309; --yw-bg:#fffbeb; --yw-bd:#fcd34d;
+  --pu:#7c3aed; --pu-bg:#f5f3ff; --pu-bd:#c4b5fd;
+  --sb-w:260px; --hdr-h:56px; --tab-h:64px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--tx);font-family:'Noto Sans JP',sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden;}
+
+/* ══ 共通 ══ */
+label{display:block;font-size:12px;color:var(--mu);margin-bottom:4px;font-weight:500;}
+.vlbl{display:block;font-size:12px;color:var(--pu);margin-bottom:4px;font-weight:500;}
+input[type=text],input[type=number],select{
+  width:100%;background:var(--surface);border:1.5px solid var(--bd);border-radius:8px;
+  padding:9px 11px;color:var(--tx);font-size:14px;
+  font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+input:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-bg);}
+select option{background:var(--surface);}
+input.vault{border-color:var(--pu-bd);}
+input.vault:focus{border-color:var(--pu);box-shadow:0 0 0 3px var(--pu-bg);}
+
+/* 手数料入力（小さめ） */
+.fee-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;}
+.fee-item{display:flex;align-items:center;gap:5px;}
+.fee-item label{margin:0;white-space:nowrap;font-size:11px;}
+.fee-input{width:60px!important;padding:5px 7px!important;font-size:13px!important;text-align:right;}
+.fee-unit{font-size:11px;color:var(--mu);flex-shrink:0;}
+
+.url-row{display:flex;gap:5px;}
+.url-row input{flex:1;min-width:0;}
+.open-btn{flex-shrink:0;width:38px;height:38px;background:var(--ac-bg);border:1.5px solid var(--ac-bd);border-radius:8px;color:var(--ac);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.open-btn:hover{background:var(--ac);color:#fff;border-color:var(--ac);}
+.open-btn.vop{background:var(--pu-bg);border-color:var(--pu-bd);color:var(--pu);}
+.open-btn.vop:hover{background:var(--pu);border-color:var(--pu);color:#fff;}
+
+
+
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.chip{padding:5px 12px;border-radius:20px;border:1.5px solid var(--bd2);font-size:12px;cursor:pointer;background:var(--surface);color:var(--mu);transition:all .12s;white-space:nowrap;font-weight:500;}
+.chip:hover{border-color:var(--ac);color:var(--ac);}
+.chip.active{background:var(--ac);border-color:var(--ac);color:#fff;}
+.sort-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.sb2{padding:5px 13px;border-radius:6px;border:1.5px solid var(--bd2);background:var(--surface);color:var(--mu);font-size:12px;cursor:pointer;transition:all .12s;white-space:nowrap;font-weight:500;}
+.sb2:hover{border-color:var(--ac);color:var(--ac);}
+.sb2.active{border-color:var(--ac);color:var(--ac);background:var(--ac-bg);}
+.hint{font-size:11px;color:var(--mu);margin-bottom:10px;display:flex;align-items:center;gap:4px;}
+.badge{background:var(--ac-bg);border:1.5px solid var(--ac-bd);border-radius:20px;padding:3px 11px;font-size:12px;color:var(--ac);font-weight:700;}
+
+/* セクション区切り */
+.sec-divider{border-top:1.5px solid var(--bd);margin:10px 0 10px;}
+.sec-lbl{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);margin-bottom:8px;}
+
+.list{display:flex;flex-direction:column;gap:10px;}
+.empty{text-align:center;padding:48px 20px;color:var(--mu);font-size:13px;}
+.empty-icon{font-size:40px;margin-bottom:10px;}
+
+/* カードアイテム */
+.ci{background:var(--surface);border:1.5px solid var(--bd);border-radius:14px;overflow:hidden;position:relative;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .1s;animation:fu .2s ease;}
+@keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.ci:hover{border-color:var(--ac-bd);box-shadow:0 4px 16px rgba(79,70,229,.08);transform:translateY(-1px);}
+.ci::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;z-index:1;}
+.ci.jp::before{background:var(--gn);}
+.ci.us::before{background:var(--rd);}
+.ci.vt::before{background:var(--pu);}
+.ci-top{padding:12px 16px 10px;}
+.cnr{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;}
+.cname{font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;color:var(--tx);}
+.gtag{font-size:11px;padding:2px 8px;border-radius:4px;background:var(--s3);color:var(--mu);border:1px solid var(--bd);}
+.grtag{font-size:11px;padding:2px 8px;border-radius:4px;background:var(--ac-bg);color:var(--ac);border:1px solid var(--ac-bd);font-weight:700;}
+.cost-tag{font-size:11px;color:var(--mu);background:var(--s3);padding:2px 7px;border-radius:4px;border:1px solid var(--bd);}
+.cset{font-size:11px;color:var(--mu);margin-bottom:8px;}
+.rec-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.rec{font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;font-family:'Oswald',sans-serif;letter-spacing:.3px;}
+.rec.jp{background:var(--gn-bg);color:var(--gn);border:1.5px solid var(--gn-bd);}
+.rec.us{background:var(--rd-bg);color:var(--rd);border:1.5px solid var(--rd-bd);}
+.rec.vt{background:var(--pu-bg);color:var(--pu);border:1.5px solid var(--pu-bd);}
+.edit-hint{font-size:11px;color:var(--mu);}
+
+/* 価格行 3列 */
+.prow{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1.5px solid var(--bd);}
+.pblk{padding:9px 12px;border-right:1.5px solid var(--bd);}
+.pblk:last-child{border-right:none;}
+.psrc{font-size:11px;color:var(--mu);margin-bottom:3px;display:flex;align-items:center;gap:3px;white-space:nowrap;font-weight:500;}
+.psrc a{color:var(--ac);text-decoration:none;font-size:11px;}
+.psrc a:hover{text-decoration:underline;}
+.psrc.vu{color:var(--pu);}
+.pamt{font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;color:var(--tx);white-space:nowrap;}
+.pamt-sub{font-family:'Oswald',sans-serif;font-size:14px;font-weight:500;color:var(--mu);white-space:nowrap;margin-top:1px;}
+.psub{font-size:10px;color:var(--mu);}
+
+/* 利益バー 4列 */
+.profit-bar{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-top:1.5px solid var(--bd);}
+.ps{padding:10px 11px;border-right:1.5px solid var(--bd);min-width:0;overflow:hidden;}
+.ps:last-child{border-right:none;}
+.ps.best{border-top:3px solid var(--gn);background:var(--gn-bg);}
+.ps.best.us-best{border-top-color:var(--rd);background:var(--rd-bg);}
+.ps.best.vt-best{border-top-color:var(--pu);background:var(--pu-bg);}
+.plbl{font-size:10px;color:var(--mu);margin-bottom:4px;font-weight:600;display:flex;align-items:center;gap:3px;flex-wrap:wrap;}
+.plbl.vu{color:var(--pu);}
+.btag{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--gn-bg);color:var(--gn);border:1px solid var(--gn-bd);}
+.btag.us{background:var(--rd-bg);color:var(--rd);border-color:var(--rd-bd);}
+.btag.vt{background:var(--pu-bg);color:var(--pu);border-color:var(--pu-bd);}
+.pnum{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;white-space:nowrap;}
+.pnum.pos{color:var(--gn);}
+.pnum.neg{color:var(--rd);}
+.pnum.zero{color:var(--mu);}
+.pdetail{font-size:10px;color:var(--mu);margin-top:3px;line-height:1.7;word-break:break-all;}
+.vault-min-price{margin-top:6px;padding:6px 8px;background:var(--pu-bg);border:1px solid var(--pu-bd);border-radius:6px;font-size:10px;color:var(--pu);line-height:1.7;}
+.vault-min-price strong{font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;}
+
+/* フォーム */
+.form-card{background:var(--surface);border:1.5px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.field{margin-bottom:10px;}
+.field:last-child{margin-bottom:0;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.vault-box{background:var(--pu-bg);border:1.5px solid var(--pu-bd);border-radius:10px;padding:12px;}
+.vault-box-title{font-size:11px;color:var(--pu);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
+.add-btn{width:100%;background:var(--ac);border:none;border-radius:10px;padding:13px;color:#fff;font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:all .15s;box-shadow:0 2px 8px rgba(79,70,229,.2);}
+.add-btn:hover{background:#4338ca;}
+
+/* 為替 */
+.rate-chip{display:flex;align-items:center;gap:5px;background:var(--yw-bg);border:1.5px solid var(--yw-bd);border-radius:20px;padding:5px 12px;white-space:nowrap;}
+#rval,#sp-rval{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:var(--yw);}
+.refresh-btn{background:none;border:none;color:var(--mu);cursor:pointer;font-size:16px;padding:2px;line-height:1;transition:color .15s;}
+.refresh-btn:hover{color:var(--yw);}
+
+/* 統計 */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat-box{background:var(--surface);border:1.5px solid var(--bd);border-radius:12px;padding:14px;}
+.stat-lbl{font-size:12px;color:var(--mu);margin-bottom:4px;font-weight:500;}
+.stat-val{font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;}
+.stat-val.g{color:var(--gn);}
+.stat-val.r{color:var(--rd);}
+.stat-val.p{color:var(--pu);}
+.stat-val.y{color:var(--yw);}
+
+/* モーダル */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.overlay.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1.5px solid var(--bd);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform .25s ease;box-shadow:0 -4px 24px rgba(0,0,0,.1);}
+.overlay.show .modal{transform:translateY(0);}
+.modal-handle{width:40px;height:4px;background:var(--bd2);border-radius:2px;margin:0 auto 16px;}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.modal-hdr h3{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;}
+.modal-close{background:var(--s3);border:1px solid var(--bd);color:var(--mu);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s;}
+.modal-close:hover{background:var(--rd-bg);color:var(--rd);}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mfull{grid-column:1/-1;}
+.mdiv{grid-column:1/-1;border-top:1.5px solid var(--bd);margin:4px 0;}
+.vault-section{grid-column:1/-1;background:var(--pu-bg);border:1.5px solid var(--pu-bd);border-radius:10px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.vault-section-lbl{grid-column:1/-1;font-size:11px;color:var(--pu);font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.modal-actions{display:flex;gap:8px;margin-top:16px;}
+.save-btn{flex:1;background:var(--ac);border:none;border-radius:10px;padding:13px;color:#fff;font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;cursor:pointer;}
+.save-btn:hover{background:#4338ca;}
+.del-btn-m{background:var(--rd-bg);border:1.5px solid var(--rd-bd);border-radius:10px;padding:13px 16px;color:var(--rd);font-size:13px;cursor:pointer;font-weight:600;}
+.del-btn-m:hover{background:var(--rd);color:#fff;}
+
+/* カスタム手数料トグル */
+.fee-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1.5px solid var(--bd);margin-top:8px;}
+.fee-toggle-lbl{font-size:13px;font-weight:500;color:var(--tx);}
+.fee-toggle-sub{font-size:11px;color:var(--mu);margin-top:2px;}
+.toggle-sw{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle-sw input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--bd2);border-radius:24px;cursor:pointer;transition:background .2s;}
+.toggle-sw input:checked+.toggle-track{background:var(--ac);}
+.toggle-track::after{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle-sw input:checked+.toggle-track::after{transform:translateX(20px);}
+.custom-fee-panel{background:var(--ac-bg);border:1.5px solid var(--ac-bd);border-radius:10px;padding:12px;margin-top:6px;display:none;}
+.custom-fee-panel.show{display:block;}
+.custom-fee-panel .fee-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;}
+.custom-fee-panel .fee-row:last-child{margin-bottom:0;}
+.custom-fee-panel .fee-item{display:flex;align-items:center;gap:5px;}
+.custom-fee-panel .fee-item label{margin:0;white-space:nowrap;font-size:11px;}
+.custom-fee-panel .fee-input{width:60px!important;padding:5px 7px!important;font-size:13px!important;text-align:right;}
+.custom-fee-panel .fee-unit{font-size:11px;color:var(--mu);flex-shrink:0;}
+.custom-badge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--ac-bg);color:var(--ac);border:1px solid var(--ac-bd);margin-left:4px;}
+
+/* 鑑定費用マスタ */
+.grading-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.grading-item{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;background:var(--s2);border:1.5px solid var(--bd);border-radius:8px;padding:8px 10px;}
+.grading-item-name{font-size:13px;font-weight:500;color:var(--tx);}
+.grading-item-price{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;color:var(--gn);}
+.grading-item-del{background:none;border:none;color:var(--mu);font-size:14px;cursor:pointer;padding:2px 4px;transition:color .12s;}
+.grading-item-del:hover{color:var(--rd);}
+.grading-add-row{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;}
+.grading-add-row input{padding:8px 10px;font-size:13px;}
+.grading-add-btn{padding:8px 12px;background:var(--ac);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+.grading-add-btn:hover{opacity:.85;}
+.io-row{display:flex;gap:6px;margin-bottom:0;}
+.io-btn{flex:1;padding:9px 6px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;font-family:'Noto Sans JP',sans-serif;}
+.io-btn.export{background:var(--ac-bg);border:1.5px solid var(--ac-bd);color:var(--ac);}
+.io-btn.export:hover{background:var(--ac);color:#fff;}
+.io-btn.import{background:var(--gn-bg);border:1.5px solid var(--gn-bd);color:var(--gn);}
+.io-btn.import:hover{background:var(--gn);color:#fff;}
+.sync-dot{
+  display:inline-block;width:8px;height:8px;border-radius:50%;
+  margin-right:4px;vertical-align:middle;flex-shrink:0;
+}
+.sync-dot.ok{background:var(--gn);}
+.sync-dot.syncing{background:var(--yw);animation:pulse .8s infinite;}
+.sync-dot.err{background:var(--rd);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.undo-logo-btn{
+  flex-shrink:0;
+  padding:6px 10px;
+  border-radius:8px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  background:var(--yw-bg);
+  border:1.5px solid var(--yw-bd);
+  color:var(--yw);
+  transition:all .15s;
+  line-height:1;
+  white-space:nowrap;
+}
+.undo-logo-btn:hover{background:var(--yw);color:#fff;border-color:var(--yw);}
+.undo-logo-btn:disabled{opacity:.3;cursor:not-allowed;}
+#import-file{display:none;}
+.cost-breakdown{font-size:11px;color:var(--mu);margin-top:2px;}
+.total-cost-tag{font-size:11px;color:var(--tx);background:var(--s3);padding:2px 7px;border-radius:4px;border:1px solid var(--bd);font-weight:600;}
+
+/* ══ PC ══ */
+@media(min-width:768px){
+  .pc-only{display:flex!important;} .sp-only{display:none!important;}
+  .app{display:grid;grid-template-columns:var(--sb-w) 1fr;min-height:100vh;}
+  .sidebar{background:var(--surface);border-right:1.5px solid var(--bd);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,.04);}
+  .sb-logo{padding:14px 14px 10px;border-bottom:1.5px solid var(--bd);background:linear-gradient(135deg,var(--ac-bg),var(--pu-bg));}
+  .sb-logo h1{font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;color:var(--tx);line-height:1.3;}
+  .sb-logo p{color:var(--mu);font-size:11px;margin-top:4px;}
+  .sb-rate{padding:8px 14px;border-bottom:1.5px solid var(--bd);background:var(--yw-bg);display:flex;align-items:center;gap:8px;}
+  .sb-rate .lbl{font-size:11px;color:var(--mu);}
+  .sb-body{padding:10px 14px;border-bottom:1.5px solid var(--bd);}
+  .sb-body label{font-size:11px;}
+  .sb-body input,.sb-body select{font-size:12px;padding:7px 8px;}
+  .sb-body .field-row{grid-template-columns:1fr;gap:6px;}
+  .sb-body .field-row>div{}
+  .sb-body .grading-add-row{grid-template-columns:1fr 70px auto;}
+  .sb-filter{padding:10px 14px;flex:1;}
+  .sb-stats{padding:10px 14px;border-top:1.5px solid var(--bd);display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--s2);}
+  .sb-stat{background:var(--surface);border:1.5px solid var(--bd);border-radius:10px;padding:9px 12px;}
+  .sb-stat-lbl{font-size:11px;color:var(--mu);margin-bottom:2px;font-weight:500;}
+  .sb-stat-val{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;}
+  .sb-stat-val.g{color:var(--gn);} .sb-stat-val.r{color:var(--rd);}
+  .pc-main{padding:20px 22px;overflow-y:auto;}
+  .pc-mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .pc-mhdr h2{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;}
+  .overlay{align-items:center;}
+  .modal{border-radius:16px;max-height:85vh;}
+}
+
+/* ══ SP ══ */
+@media(max-width:767px){
+  .pc-only{display:none!important;} .sp-only{display:flex!important;}
+  .sp-header{position:fixed;top:0;left:0;right:0;z-index:50;background:var(--surface);border-bottom:1.5px solid var(--bd);height:var(--hdr-h);display:flex;align-items:center;padding:0 14px;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .sp-header h1{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:var(--tx);line-height:1.3;flex:1;}
+  .sp-content{margin-top:var(--hdr-h);padding-bottom:calc(var(--tab-h)+8px);}
+  .sp-page{display:none;padding:14px;}
+  .sp-page.active{display:block;}
+  .sp-tabbar{position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--surface);border-top:1.5px solid var(--bd);height:var(--tab-h);display:flex;box-shadow:0 -2px 8px rgba(0,0,0,.06);}
+  .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;color:var(--mu);font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:color .15s;font-weight:500;}
+  .tab-btn .ic{font-size:20px;line-height:1;}
+  .tab-btn.active{color:var(--ac);}
+  .filter-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;margin-bottom:8px;}
+  .filter-scroll::-webkit-scrollbar{display:none;}
+  .filter-scroll .chip,.filter-scroll .sb2{flex-shrink:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ PC ══ -->
+<div class="app pc-only">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div>
+          <h1>販売先<br>利益比較</h1>
+          <p>国内 / eBay / PSA Vault</p>
+          <p style="font-size:10px;margin-top:4px;display:flex;align-items:center;" id="save-indicator"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">接続中...</span></p>
+        </div>
+        <button class="undo-logo-btn" id="pc-undo-btn" onclick="undoAction()" disabled title="取り消し">↩</button>
+      </div>
+    </div>
+    <div class="sb-rate">
+      <span class="lbl">1 USD =</span>
+      <div class="rate-chip" style="background:transparent;border:none;padding:0;gap:6px;">
+        <span id="rval">---</span><span class="lbl">円</span>
+        <button class="refresh-btn" onclick="fetchRate()">⟳</button>
+        <span id="rtime" style="font-size:10px;color:var(--mu);"></span>
+      </div>
+    </div>
+
+    <!-- カード追加フォーム -->
+    <div class="sb-body">
+      <div class="sec-lbl">カードを追加</div>
+      <div class="field-row">
+        <div class="modal-full" style="grid-column:1/-1;"><label>ゲーム</label><input list="game-list" id="fg" placeholder="例：ポケモンカード" autocomplete="off"></div>
+        <div><label>グレード</label><select id="fgr"><option>PSA 10</option><option>PSA 9</option><option>PSA 8</option><option>RAW</option></select></div>
+      </div>
+      <div class="field"><label>カード名</label><input type="text" id="fn" placeholder="例：リザードンex SR"></div>
+      <div class="field-row">
+        <div><label>セット名</label><input type="text" id="fs" placeholder="例：151"></div>
+        <div><label>仕入金額（円）</label><input type="number" id="fpurchase" placeholder="30000" oninput="updateCostBreakdown('pc-cost-breakdown','fpurchase','fgrading')"></div>
+      </div>
+      <div class="field-row">
+        <div><label>鑑定費用</label><select id="fgrading" onchange="updateCostBreakdown('pc-cost-breakdown','fpurchase','fgrading')"><option value="">なし</option></select></div>
+        <div style="display:flex;flex-direction:column;justify-content:flex-end;"><div class="cost-breakdown" id="pc-cost-breakdown"></div></div>
+      <div class="field-row">
+        <div><label>国内販売価格（円）</label><input type="number" id="fjp" placeholder="45000"></div>
+        <div><label>国内URL</label><div class="url-row"><input type="text" id="fjpu" placeholder="https://snkrdunk.com/..."><button class="open-btn" onclick="openUrl('fjpu')">↗</button></div></div>
+      </div>
+      <div class="field">
+        <label>eBay販売価格（USD）</label>
+        <input type="number" id="fus" placeholder="例：280">
+      </div>
+      <div class="field">
+        <label>eBay URL</label>
+        <div class="url-row"><input type="text" id="fusu" placeholder="https://ebay.com/..."><button class="open-btn" onclick="openUrl('fusu')">↗</button></div>
+      </div>
+      <div class="vault-box">
+        <div class="vault-box-title">🏦 PSA Vault</div>
+        <div class="field-row" style="margin-bottom:8px;">
+          <div><label class="vlbl">オファー価格（USD）</label><input type="number" id="fvault" placeholder="250" class="vault"></div>
+          <div><label class="vlbl">Vault URL</label><div class="url-row"><input type="text" id="fvaultu" placeholder="https://vault.psacard.com/..." class="vault"><button class="open-btn vop" onclick="openUrl('fvaultu')">↗</button></div></div>
+        </div>
+      </div>
+      <button class="add-btn" style="margin-top:10px;" onclick="addCard()">＋ 追加する</button>
+      <!-- 鑑定費用マスタ -->
+      <div class="sec-divider"></div>
+      <div class="sec-lbl">🏅 鑑定費用マスタ</div>
+      <div class="grading-list" id="pc-grading-master-list"></div>
+      <div class="grading-add-row" style="margin-bottom:4px;">
+        <input type="text" id="pc-gname" placeholder="例：バルク">
+        <input type="number" id="pc-gprice" placeholder="4000" style="width:90px;">
+        <button class="grading-add-btn" onclick="addGradingFee('pc')">追加</button>
+      </div>
+      <!-- 手数料設定 -->
+      <div class="sec-divider"></div>
+      <div class="sec-lbl">⚙ 手数料・送料設定</div>
+      <div class="fee-row">
+        <div class="fee-item"><label>国内手数料</label><input type="number" class="fee-input" id="fee-jp" value="10" min="0" max="100" step="0.1" oninput="render()"><span class="fee-unit">%</span></div>
+        <div class="fee-item"><label>国内利益税</label><input type="number" class="fee-input" id="fee-jp-tax" value="10" min="0" max="100" step="0.1" oninput="render()"><span class="fee-unit">%</span></div>
+      </div>
+      <div class="fee-row">
+        <div class="fee-item"><label>国内送料</label><input type="number" class="fee-input" id="fee-jp-ship" value="300" min="0" oninput="render()"><span class="fee-unit">円</span></div>
+        <div class="fee-item"><label>eBay手数料</label><input type="number" class="fee-input" id="fee-ebay" value="18" min="0" max="100" step="0.1" oninput="render()"><span class="fee-unit">%</span></div>
+      </div>
+      <div class="fee-row">
+        <div class="fee-item"><label>海外送料</label><input type="number" class="fee-input" id="fee-us-ship" value="3000" min="0" oninput="render()"><span class="fee-unit">円</span></div>
+        <div class="fee-item"><label>関税還付率</label><input type="number" class="fee-input" id="fee-rebate" value="8" min="0" max="100" step="0.1" oninput="render()"><span class="fee-unit">%</span></div>
+      </div>
+      <div class="fee-row">
+        <div class="fee-item"><label>鑑定関税率</label><input type="number" class="fee-input" id="fee-grading-duty" value="10" min="0" max="100" step="0.1" oninput="render()"><span class="fee-unit">%</span></div>
+        <div style="font-size:10px;color:var(--mu);display:flex;align-items:center;">PSA返送時</div>
+      </div>
+      <div class="fee-row">
+        <div class="fee-item"><label>直接取引 価格率</label><input type="number" class="fee-input" id="fee-direct-rate" value="95" min="0" max="100" step="0.1" oninput="render()"><span class="fee-unit">%</span></div>
+        <div class="fee-item"><label>直接取引 手数料</label><input type="number" class="fee-input" id="fee-direct" value="8" min="0" max="100" step="0.1" oninput="render()"><span class="fee-unit">%</span></div>
+      </div>
+    </div>
+
+    <!-- フィルター -->
+    <div style="padding:10px 14px;border-bottom:1.5px solid var(--bd);">
+      <div class="sec-lbl" style="margin-bottom:8px;">📦 データ管理</div>
+      <div class="io-row">
+        <button class="io-btn export" onclick="exportData()">⬇ エクスポート</button>
+        <label class="io-btn import" style="display:flex;align-items:center;justify-content:center;gap:4px;margin:0;">
+          ⬆ インポート<input type="file" id="import-file" accept=".json" onchange="importData(event)">
+        </label>
+      </div>
+    </div>
+    <div class="sb-filter">
+      <div class="sec-lbl">絞り込み</div>
+      <div class="chips" id="pc-cg"><button class="chip active" data-v="all">すべて</button></div>
+      <div class="chips" id="pc-cs">
+        <button class="chip active" data-v="all">全て</button>
+        <button class="chip" data-v="jp">国内有利</button>
+        <button class="chip" data-v="us">eBay有利</button>
+        <button class="chip" data-v="vault">Vault有利</button>
+        <button class="chip" data-v="profit">利益あり</button>
+      </div>
+    </div>
+    <div class="sb-stats">
+      <div class="sb-stat"><div class="sb-stat-lbl">国内有利</div><div class="sb-stat-val g" id="pc-sjp">0件</div></div>
+      <div class="sb-stat"><div class="sb-stat-lbl">eBay有利</div><div class="sb-stat-val r" id="pc-sus">0件</div></div>
+    </div>
+  </aside>
+
+  <main class="pc-main">
+    <div class="pc-mhdr">
+      <h2>利益比較リスト</h2>
+      <span class="badge" id="pc-cnt">0件</span>
+    </div>
+    <div class="sort-row">
+      <button class="sb2 active" onclick="setSort('profit',this)">利益が高い順</button>
+      <button class="sb2" onclick="setSort('jp',this)">国内価格順</button>
+      <button class="sb2" onclick="setSort('added',this)">追加順</button>
+    </div>
+    <div class="hint">✎ カードをクリックして編集</div>
+    <div class="list" id="pc-list"></div>
+  </main>
+</div>
+
+<!-- ══ SP ══ -->
+<div class="sp-only" style="flex-direction:column;width:100%;">
+  <header class="sp-header">
+    <h1>販売先利益比較</h1>
+    <button class="undo-logo-btn" id="sp-undo-btn" onclick="undoAction()" disabled title="取り消し">↩</button>
+    <div class="rate-chip">
+      <span style="font-size:11px;color:var(--mu);font-weight:500;">$1=</span>
+      <span id="sp-rval">---</span>
+      <span style="font-size:11px;color:var(--mu);">円</span>
+      <button class="refresh-btn" onclick="fetchRate()">⟳</button>
+    </div>
+    <span id="sp-rtime" style="font-size:10px;color:var(--mu);"></span>
+  </header>
+
+  <div class="sp-content">
+    <!-- リスト -->
+    <div class="sp-page active" id="sp-page-list">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;">比較リスト</span>
+        <span class="badge" id="sp-cnt">0件</span>
+      </div>
+      <div class="filter-scroll" id="sp-cg"><button class="chip active" data-v="all">すべて</button></div>
+      <div class="filter-scroll" id="sp-cs">
+        <button class="chip active" data-v="all">全て</button>
+        <button class="chip" data-v="jp">国内有利</button>
+        <button class="chip" data-v="us">eBay有利</button>
+        <button class="chip" data-v="vault">Vault有利</button>
+        <button class="chip" data-v="profit">利益あり</button>
+      </div>
+      <div class="filter-scroll" style="margin-bottom:10px;">
+        <button class="sb2 active" onclick="setSort('profit',this)">利益が高い順</button>
+        <button class="sb2" onclick="setSort('jp',this)">国内価格順</button>
+        <button class="sb2" onclick="setSort('added',this)">追加順</button>
+      </div>
+      <div class="hint">✎ タップして編集</div>
+      <div class="list" id="sp-list"></div>
+    </div>
+
+    <!-- 追加 -->
+    <div class="sp-page" id="sp-page-add">
+      <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;margin-bottom:14px;">カードを追加</div>
+      <div class="form-card">
+        <div class="sec-lbl">基本情報</div>
+        <div class="field-row"><div class="modal-full" style="grid-column:1/-1;"><label>ゲーム</label><input list="game-list" id="sp-fg" placeholder="例：ポケモンカード" autocomplete="off"></div><div><label>グレード</label><select id="sp-fgr"><option>PSA 10</option><option>PSA 9</option><option>PSA 8</option><option>RAW</option></select></div></div>
+        <div class="field"><label>カード名</label><input type="text" id="sp-fn" placeholder="例：リザードンex SR"></div>
+        <div class="field"><label>セット名</label><input type="text" id="sp-fs" placeholder="例：151"></div>
+        <div class="field"><label>仕入金額（円）</label><input type="number" id="sp-fpurchase" placeholder="例：30000" oninput="updateCostBreakdown('sp-cost-breakdown','sp-fpurchase','sp-fgrading')"></div>
+        <div class="field"><label>鑑定費用</label><select id="sp-fgrading" onchange="updateCostBreakdown('sp-cost-breakdown','sp-fpurchase','sp-fgrading')"><option value="">なし</option></select></div>
+        <div class="cost-breakdown" id="sp-cost-breakdown"></div>
+      </div>
+      <div class="form-card">
+        <div class="sec-lbl">🇯🇵 国内</div>
+        <div class="field"><label>販売価格（円）</label><input type="number" id="sp-fjp" placeholder="例：45000"></div>
+        <div class="field"><label>URL</label><div class="url-row"><input type="text" id="sp-fjpu" placeholder="https://snkrdunk.com/..."><button class="open-btn" onclick="openUrl('sp-fjpu')">↗</button></div></div>
+      </div>
+      <div class="form-card">
+        <div class="sec-lbl">🌐 eBay</div>
+        <div class="field">
+          <label>eBay販売価格（USD）</label>
+          <input type="number" id="sp-fus" placeholder="例：280">
+        </div>
+        <div class="field"><label>URL</label>
+          <div class="url-row"><input type="text" id="sp-fusu" placeholder="https://ebay.com/..."><button class="open-btn" onclick="openUrl('sp-fusu')">↗</button></div>
+        </div>
+      </div>
+      <div class="vault-box" style="margin-bottom:10px;">
+        <div class="vault-box-title">🏦 PSA Vault</div>
+        <div class="field"><label class="vlbl">オファー価格（USD）</label><input type="number" id="sp-fvault" placeholder="例：250" class="vault"></div>
+        <div class="field"><label class="vlbl">URL</label><div class="url-row"><input type="text" id="sp-fvaultu" placeholder="https://vault.psacard.com/..." class="vault"><button class="open-btn vop" onclick="openUrl('sp-fvaultu')">↗</button></div></div>
+      </div>
+      <button class="add-btn" onclick="addCardSp()">＋ リストに追加する</button>
+    </div>
+
+    <!-- 設定 -->
+    <div class="sp-page" id="sp-page-settings">
+      <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;margin-bottom:14px;">⚙ 設定</div>
+      <div class="form-card">
+        <div class="sec-lbl">📦 データ管理</div>
+        <div class="io-row">
+          <button class="io-btn export" onclick="exportData()">⬇ エクスポート</button>
+          <label class="io-btn import" style="display:flex;align-items:center;justify-content:center;gap:4px;margin:0;">
+            ⬆ インポート<input type="file" id="sp-import-file" accept=".json" onchange="importData(event)">
+          </label>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="sec-lbl">🏅 鑑定費用マスタ</div>
+        <div class="grading-list" id="sp-grading-master-list"></div>
+        <div class="grading-add-row">
+          <input type="text" id="sp-gname" placeholder="例：バルク">
+          <input type="number" id="sp-gprice" placeholder="4000" style="width:90px;">
+          <button class="grading-add-btn" onclick="addGradingFee('sp')">追加</button>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="sec-lbl">手数料・送料</div>
+        <div class="fee-row"><div class="fee-item"><label>国内手数料</label><input type="number" class="fee-input" id="sp-fee-jp" value="10" min="0" max="100" step="0.1" oninput="syncFee('fee-jp',this.value);render()"><span class="fee-unit">%</span></div><div class="fee-item"><label>国内利益税</label><input type="number" class="fee-input" id="sp-fee-jp-tax" value="10" min="0" max="100" step="0.1" oninput="syncFee('fee-jp-tax',this.value);render()"><span class="fee-unit">%</span></div></div>
+        <div class="fee-row"><div class="fee-item"><label>国内送料</label><input type="number" class="fee-input" id="sp-fee-jp-ship" value="300" min="0" oninput="syncFee('fee-jp-ship',this.value);render()"><span class="fee-unit">円</span></div><div class="fee-item"><label>eBay手数料</label><input type="number" class="fee-input" id="sp-fee-ebay" value="18" min="0" max="100" step="0.1" oninput="syncFee('fee-ebay',this.value);render()"><span class="fee-unit">%</span></div></div>
+        <div class="fee-row"><div class="fee-item"><label>海外送料</label><input type="number" class="fee-input" id="sp-fee-us-ship" value="3000" min="0" oninput="syncFee('fee-us-ship',this.value);render()"><span class="fee-unit">円</span></div><div class="fee-item"><label>関税還付率</label><input type="number" class="fee-input" id="sp-fee-rebate" value="8" min="0" max="100" step="0.1" oninput="syncFee('fee-rebate',this.value);render()"><span class="fee-unit">%</span></div></div>
+        <div class="fee-row"><div class="fee-item"><label>直接取引 価格率</label><input type="number" class="fee-input" id="sp-fee-direct-rate" value="95" min="0" max="100" step="0.1" oninput="syncFee('fee-direct-rate',this.value);render()"><span class="fee-unit">%</span></div><div class="fee-item"><label>直接取引 手数料</label><input type="number" class="fee-input" id="sp-fee-direct" value="8" min="0" max="100" step="0.1" oninput="syncFee('fee-direct',this.value);render()"><span class="fee-unit">%</span></div></div>
+        <div class="fee-row"><div class="fee-item"><label>鑑定関税率</label><input type="number" class="fee-input" id="sp-fee-grading-duty" value="10" min="0" max="100" step="0.1" oninput="syncFee('fee-grading-duty',this.value);render()"><span class="fee-unit">%</span></div><div style="font-size:10px;color:var(--mu);display:flex;align-items:center;">PSA返送時の関税</div></div>
+      </div>
+      <div class="form-card">
+        <div class="sec-lbl">統計</div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-lbl">登録カード数</div><div class="stat-val y" id="sp-st-total">0</div></div>
+          <div class="stat-box"><div class="stat-lbl">利益あり</div><div class="stat-val g" id="sp-st-profit">0</div></div>
+          <div class="stat-box"><div class="stat-lbl">国内有利</div><div class="stat-val g" id="sp-st-jp">0件</div></div>
+          <div class="stat-box"><div class="stat-lbl">eBay有利</div><div class="stat-val r" id="sp-st-us">0件</div></div>
+          <div class="stat-box"><div class="stat-lbl">Vault有利</div><div class="stat-val p" id="sp-st-vt">0件</div></div>
+          <div class="stat-box"><div class="stat-lbl">最大利益</div><div class="stat-val g" id="sp-st-max">---</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sp-tabbar">
+    <button class="tab-btn active" onclick="spTab('list',this)"><span class="ic">📋</span>リスト</button>
+    <button class="tab-btn" onclick="spTab('add',this)"><span class="ic">➕</span>追加</button>
+    <button class="tab-btn" onclick="spTab('settings',this)"><span class="ic">⚙️</span>設定</button>
+  </nav>
+</div>
+
+<!-- 編集モーダル -->
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <h3>カードを編集</h3>
+      <button class="modal-close" onclick="closeModalForce()">✕</button>
+    </div>
+    <div class="modal-grid">
+      <div><label>ゲーム</label><input list="game-list" id="m-game" placeholder="例：ポケモンカード" autocomplete="off"></div>
+      <div><label>グレード</label><select id="m-grade"><option>PSA 10</option><option>PSA 9</option><option>PSA 8</option><option>RAW</option></select></div>
+      <div class="mfull"><label>カード名</label><input type="text" id="m-name"></div>
+      <div><label>セット名</label><input type="text" id="m-set"></div>
+      <div><label>仕入金額（円）</label><input type="number" id="m-purchase" oninput="updateCostBreakdown('m-cost-breakdown','m-purchase','m-grading')"></div>
+      <div class="mfull"><label>鑑定費用</label><select id="m-grading" style="width:100%;" onchange="updateCostBreakdown('m-cost-breakdown','m-purchase','m-grading')"><option value="">なし</option></select></div>
+      <div class="mfull"><div class="cost-breakdown" id="m-cost-breakdown"></div></div>
+      <div class="mdiv"></div>
+      <div><label>国内販売価格（円）</label><input type="number" id="m-jp"></div>
+      <div><label>国内URL</label><div class="url-row"><input type="text" id="m-jpu"><button class="open-btn" onclick="openUrl('m-jpu')">↗</button></div></div>
+      <div class="mfull"><label>eBay販売価格（USD）</label><input type="number" id="m-us"></div>
+      <div class="mfull">
+        <label>eBay URL</label>
+        <div class="url-row"><input type="text" id="m-usu" placeholder="https://ebay.com/..."><button class="open-btn" onclick="openUrl('m-usu')">↗</button></div>
+      </div>
+      <div class="vault-section">
+        <div class="vault-section-lbl">🏦 PSA Vault</div>
+        <div><label class="vlbl">オファー価格（USD）</label><input type="number" id="m-vault" class="vault"></div>
+        <div><label class="vlbl">Vault URL</label><div class="url-row"><input type="text" id="m-vaultu" class="vault"><button class="open-btn vop" onclick="openUrl('m-vaultu')">↗</button></div></div>
+      </div>
+    </div>
+    <!-- 手数料カスタム設定 -->
+    <div class="fee-toggle-row">
+      <div>
+        <div class="fee-toggle-lbl">手数料をカスタム設定</div>
+        <div class="fee-toggle-sub">オフの場合はグローバル設定を使用</div>
+      </div>
+      <label class="toggle-sw">
+        <input type="checkbox" id="m-fee-custom" onchange="toggleCustomFee()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <div class="custom-fee-panel" id="m-fee-panel">
+      <div class="fee-row">
+        <div class="fee-item"><label>国内手数料</label><input type="number" class="fee-input" id="m-fee-jp" min="0" max="100" step="0.1"><span class="fee-unit">%</span></div>
+        <div class="fee-item"><label>国内利益税</label><input type="number" class="fee-input" id="m-fee-jp-tax" min="0" max="100" step="0.1"><span class="fee-unit">%</span></div>
+      </div>
+      <div class="fee-row">
+        <div class="fee-item"><label>国内送料</label><input type="number" class="fee-input" id="m-fee-jp-ship" min="0"><span class="fee-unit">円</span></div>
+        <div class="fee-item"><label>eBay手数料</label><input type="number" class="fee-input" id="m-fee-ebay" min="0" max="100" step="0.1"><span class="fee-unit">%</span></div>
+      </div>
+      <div class="fee-row">
+        <div class="fee-item"><label>海外送料</label><input type="number" class="fee-input" id="m-fee-us-ship" min="0"><span class="fee-unit">円</span></div>
+        <div class="fee-item"><label>関税還付率</label><input type="number" class="fee-input" id="m-fee-rebate" min="0" max="100" step="0.1"><span class="fee-unit">%</span></div>
+      </div>
+      <div class="fee-row">
+        <div class="fee-item"><label>鑑定関税率</label><input type="number" class="fee-input" id="m-fee-grading-duty" min="0" max="100" step="0.1"><span class="fee-unit">%</span></div>
+      </div>
+      <div class="fee-row">
+        <div class="fee-item"><label>直接取引 価格率</label><input type="number" class="fee-input" id="m-fee-direct-rate" value="95" min="0" max="100" step="0.1"><span class="fee-unit">%</span></div>
+        <div class="fee-item"><label>直接取引 手数料</label><input type="number" class="fee-input" id="m-fee-direct" value="8" min="0" max="100" step="0.1"><span class="fee-unit">%</span></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="save-btn" onclick="saveEdit()">保存する</button>
+      <button class="del-btn-m" onclick="deleteFromModal()">削除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let rate=155, sortMode='profit', gameF='all', sellF='all', editingId=null;
+
+// グローバル手数料取得
+const getFee = id => parseFloat(document.getElementById(id)?.value)||0;
+
+// カード個別 or グローバル手数料を取得
+function getCardFee(card, key) {
+  if(card.customFee && card.customFee[key] !== undefined && card.customFee[key] !== null)
+    return card.customFee[key];
+  return getFee('fee-' + key);
+}
+
+// 鑑定費用マスタ
+let gradingFees = [
+  {id:1, name:'バルク',    price:4000},
+  {id:2, name:'レギュラー', price:10000},
+];
+let gradingNextId = 3;
+
+// カードの合計仕入コスト（仕入金額＋鑑定費用）
+function getTotalCost(card) {
+  const purchase = card.purchase || 0;
+  const gf = gradingFees.find(g => g.id === card.gradingFeeId);
+  return purchase + (gf ? gf.price : 0);
+}
+
+// 鑑定関税額（鑑定費用×関税率）
+function getGradingDuty(card) {
+  const gf = gradingFees.find(g => g.id === card.gradingFeeId);
+  if(!gf) return 0;
+  const dutyR = getCardFee(card, 'grading-duty') / 100;
+  return Math.round(gf.price * dutyR);
+}
+
+const calcJp = (s, card) => {
+  const cost = getTotalCost(card);
+  if(!s||!cost) return null;
+  const feeR=getCardFee(card,'jp')/100, taxR=getCardFee(card,'jp-tax')/100, ship=getCardFee(card,'jp-ship');
+  const duty=getGradingDuty(card);
+  return Math.round(s - s*feeR - cost - ship - (s-cost)*taxR - duty);
+};
+const calcEbay = (usd, card) => {
+  const cost = getTotalCost(card);
+  if(!usd||!cost) return null;
+  const jpy=usd*rate, feeR=getCardFee(card,'ebay')/100, ship=getCardFee(card,'us-ship'), rebR=getCardFee(card,'rebate')/100;
+  const duty=getGradingDuty(card);
+  return Math.round(jpy - jpy*feeR - cost - ship + cost*rebR - duty);
+};
+const calcDirect = (usd, card) => {
+  const cost = getTotalCost(card);
+  if(!usd||!cost) return null;
+  const rateD  = getCardFee(card,'direct-rate') / 100;
+  const directUsd = usd * rateD;
+  const jpy  = directUsd * rate;
+  const feeR = getCardFee(card,'direct') / 100;
+  const ship = getCardFee(card,'us-ship');
+  const rebR = getCardFee(card,'rebate') / 100;
+  const duty = getGradingDuty(card);
+  return Math.round(jpy - jpy*feeR - cost - ship + cost*rebR - duty);
+};
+
+// Vault利益が指定利益を上回る最低オファー価格(USD)を計算
+// vuP = usd*rate - cost + cost*rebR
+// usd*rate > targetProfit + cost - cost*rebR
+// usd > (targetProfit + cost - cost*rebR) / rate
+function calcMinVaultUsd(targetProfit, card) {
+  if(targetProfit === null || targetProfit === undefined) return null;
+  const cost = getTotalCost(card);
+  const rebR = getCardFee(card,'rebate') / 100;
+  const minJpy = targetProfit + cost - cost * rebR;
+  return minJpy / rate;
+}
+
+const calcVu = (usd, card) => {
+  const cost = getTotalCost(card);
+  if(!usd||!cost) return null;
+  const rebR=getCardFee(card,'rebate')/100;
+  return Math.round(usd*rate - cost + cost*rebR);
+};
+
+const toJpy=u=>u*rate;
+const fmt=n=>Math.round(n).toLocaleString();
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const sgn=n=>n>=0?'+':'';
+const pcls=n=>n===null?'zero':n>0?'pos':n<0?'neg':'zero';
+const getV=id=>document.getElementById(id)?.value||'';
+const gNum=id=>parseFloat(getV(id))||0;
+
+// SP←→PC手数料同期
+function syncFee(baseId, val){
+  const pcEl=document.getElementById(baseId);
+  const spEl=document.getElementById('sp-'+baseId);
+  if(pcEl&&pcEl!==event?.target) pcEl.value=val;
+  if(spEl&&spEl!==event?.target) spEl.value=val;
+}
+
+let cards=[
+  {id:1,name:"リザードンex SR",game:"ポケモンカード",set:"151",grade:"PSA 10",purchase:25000,gradingFeeId:2,jp:48000,us:310,vault:290,jpUrl:"",usUrl:"",vaultUrl:""},
+  {id:2,name:"ピカチュウ プロモ",game:"ポケモンカード",set:"プロモ",grade:"PSA 10",purchase:18000,gradingFeeId:1,jp:32000,us:240,vault:220,jpUrl:"",usUrl:"",vaultUrl:""},
+  {id:3,name:"ルフィ SP",game:"ワンピースカード",set:"頂上決戦",grade:"PSA 10",purchase:16000,gradingFeeId:1,jp:28000,us:195,vault:185,jpUrl:"",usUrl:"",vaultUrl:""},
+  {id:4,name:"カイドウ SR",game:"ワンピースカード",set:"二つの伝説",grade:"PSA 9",purchase:5000,gradingFeeId:1,jp:12000,us:95,vault:80,jpUrl:"",usUrl:"",vaultUrl:""},
+  {id:5,name:"ミュウツーex",game:"ポケモンカード",set:"スカーレット&バイオレット",grade:"PSA 9",purchase:7000,gradingFeeId:1,jp:15000,us:88,vault:0,jpUrl:"",usUrl:"",vaultUrl:""},
+];
+let nid=6;
+
+function bestChannel(c){
+  const j=calcJp(c.jp,c)??-Infinity;
+  const e=calcEbay(c.us,c)??-Infinity;
+  const d=calcDirect(c.us,c)??-Infinity;
+  const v=calcVu(c.vault,c)??-Infinity;
+  const usBest=Math.max(e,d);
+  if(v>=usBest&&v>=j) return 'vt';
+  if(usBest>=j) return e>=d?'us':'direct';
+  return 'jp';
+}
+function bestProfit(c){
+  return Math.max(
+    calcJp(c.jp,c)??-Infinity,
+    calcEbay(c.us,c)??-Infinity,
+    calcDirect(c.us,c)??-Infinity,
+    calcVu(c.vault,c)??-Infinity
+  );
+}
+
+function getList(){
+  return cards.filter(c=>{
+    if(gameF!=='all'&&c.game!==gameF) return false; // game完全一致
+    const b=bestChannel(c);
+    if(sellF==='jp'&&b!=='jp') return false;
+    if(sellF==='us'&&b!=='us'&&b!=='direct') return false;
+    if(sellF==='vault'&&b!=='vt') return false;
+    if(sellF==='profit'&&bestProfit(c)<=0) return false;
+    return true;
+  });
+}
+function sortList(arr){
+  return [...arr].sort((a,b)=>{
+    if(sortMode==='profit') return bestProfit(b)-bestProfit(a);
+    if(sortMode==='jp') return b.jp-a.jp;
+    return b.id-a.id;
+  });
+}
+
+function buildCards(){
+  const list=sortList(getList());
+  if(!list.length) return '<div class="empty"><div class="empty-icon">🃏</div>該当カードがありません</div>';
+  return list.map(c=>{
+    const vJpy=c.vault?toJpy(c.vault):0;
+    const gm=c.game||'不明';
+    const best=bestChannel(c);
+    const totalCost=getTotalCost(c);
+    const gf=gradingFees.find(g=>g.id===c.gradingFeeId);
+    const jpP=calcJp(c.jp,c);
+    const ebayP=calcEbay(c.us,c);
+    const directP=calcDirect(c.us,c);
+    const vuP=calcVu(c.vault,c);
+
+    const jlink=c.jpUrl?`<a href="${esc(c.jpUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a>`:'';
+    const ulink=c.usUrl?`<a href="${esc(c.usUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a>`:'';
+    const vlink=c.vaultUrl?`<a href="${esc(c.vaultUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a>`:'';
+
+    // 手数料値（カード個別 or グローバル）
+    const feeJp=getCardFee(c,'jp'), taxJp=getCardFee(c,'jp-tax'), shipJp=getCardFee(c,'jp-ship');
+    const feeEbay=getCardFee(c,'ebay'), shipUs=getCardFee(c,'us-ship'), rebate=getCardFee(c,'rebate');
+    const costLabel = gf
+      ? `仕入¥${fmt(c.purchase||0)}+鑑定¥${fmt(gf.price)}`
+      : `仕入¥${fmt(totalCost)}`;
+
+    const jpFee=c.jp?Math.round(c.jp*feeJp/100):0;
+    const jpTax=c.jp&&totalCost?Math.round((c.jp-totalCost)*taxJp/100):0;
+    const gradingDuty=getGradingDuty(c);
+    const dutyLabel=gradingDuty?` - 鑑定関税¥${fmt(gradingDuty)}`:''
+    const jpDtl=c.jp&&totalCost?`¥${fmt(c.jp)} - 手数料¥${fmt(jpFee)} - ${costLabel} - 送料¥${fmt(shipJp)} - 利益税¥${fmt(jpTax)}${dutyLabel}`:'未入力';
+
+    const eJpy=c.us?toJpy(c.us):0;
+    const eFee=Math.round(eJpy*feeEbay/100);
+    const usReb=totalCost?Math.round(totalCost*rebate/100):0;
+    const eDtl=c.us&&totalCost?`$${c.us}(¥${fmt(eJpy)}) - 手数料¥${fmt(eFee)} - ${costLabel} - 送料¥${fmt(shipUs)} + 還付¥${fmt(usReb)}${dutyLabel}`:'未入力';
+    const directRateV = getCardFee(c,'direct-rate')/100;
+    const directUsdV  = c.us ? c.us * directRateV : 0;
+    const directJpy   = directUsdV * rate;
+    const directFeeR  = getCardFee(c,'direct')/100;
+    const directFeeAmt= Math.round(directJpy * directFeeR);
+    const dDtl = c.us&&totalCost
+      ? `$${c.us}×${Math.round(directRateV*100)}%=$${directUsdV.toFixed(0)}(¥${fmt(directJpy)}) - 手数料¥${fmt(directFeeAmt)} - ${costLabel} - 送料¥${fmt(shipUs)} + 還付¥${fmt(usReb)}${dutyLabel}`
+      : '未入力';
+    const vuReb=totalCost?Math.round(totalCost*rebate/100):0;
+    const vuDtl=c.vault&&totalCost?`$${c.vault}(¥${fmt(vJpy)}) - ${costLabel} + 還付¥${fmt(vuReb)}`:'未入力';
+
+    // Vault最低価格計算
+    const bestRival = Math.max(jpP??-Infinity, ebayP??-Infinity, directP??-Infinity);
+    const minVsJp    = jpP!==null    ? calcMinVaultUsd(jpP,    c) : null;
+    const minVsEbay  = ebayP!==null  ? calcMinVaultUsd(ebayP,  c) : null;
+    const minVsDirect= directP!==null? calcMinVaultUsd(directP,c) : null;
+    const minVaultNeeded = Math.max(minVsJp??0, minVsEbay??0, minVsDirect??0);
+
+    let vaultMinHtml = '';
+    if(totalCost > 0 && (jpP!==null || ebayP!==null || directP!==null)){
+      if(c.vault && vuP!==null && vuP >= bestRival){
+        // すでにVaultが最大
+        vaultMinHtml = '';
+      } else {
+        const needed = Math.ceil(minVaultNeeded * 100) / 100;
+        const rows = [];
+        if(minVsJp!==null)     rows.push(`国内超え: <strong>$${Math.ceil(minVsJp*100)/100}</strong>`);
+        if(minVsEbay!==null)   rows.push(`eBay超え: <strong>$${Math.ceil(minVsEbay*100)/100}</strong>`);
+        if(minVsDirect!==null) rows.push(`直接取引超え: <strong>$${Math.ceil(minVsDirect*100)/100}</strong>`);
+        vaultMinHtml = `<div class="vault-min-price">📌 利益超えに必要な最低オファー<br>${rows.join('<br>')}</div>`;
+      }
+    }
+
+    const rl={jp:'国内で売る',us:'eBayで売る',direct:'直接取引',vt:'PSA Vault'}[best]||'---';
+
+    return `<div class="ci ${best}" onclick="openModal(${c.id})">
+      <div class="ci-top">
+        <div class="cnr"><span class="cname">${esc(c.name)}</span><span class="gtag">${gm}</span><span class="grtag">${esc(c.grade)}</span>${totalCost?`<span class="total-cost-tag">仕入合計 ¥${fmt(totalCost)}</span>`:''} ${c.customFee?'<span class="custom-badge">⚙ 手数料カスタム</span>':''}</div>
+        <div class="cset">${esc(c.set)}</div>
+        <div class="rec-row"><span class="rec ${best==='direct'?'us':best}">${rl} ▲</span><span class="edit-hint">✎ タップして編集</span></div>
+      </div>
+      <div class="prow">
+        <div class="pblk">
+          <div class="psrc">🇯🇵 国内 ${jlink}</div>
+          <div class="pamt" style="${best==='jp'?'color:var(--gn)':''}">${c.jp?'¥'+fmt(c.jp):'---'}</div>
+        </div>
+        <div class="pblk">
+          <div class="psrc">🌐 eBay ${ulink}</div>
+          <div class="pamt" style="${best==='us'?'color:var(--rd)':''}">${c.us?'¥'+fmt(toJpy(c.us)):'---'}</div>
+          <div class="psub">${c.us?'$'+c.us:''}</div>
+        </div>
+        <div class="pblk">
+          <div class="psrc vu">🏦 Vault ${vlink}</div>
+          <div class="pamt" style="${best==='vt'?'color:var(--pu)':''}">${c.vault?'¥'+fmt(vJpy):'---'}</div>
+          <div class="psub">${c.vault?'$'+c.vault:''}</div>
+        </div>
+      </div>
+      <div class="profit-bar">
+        <div class="ps${best==='jp'?' best':''}">
+          <div class="plbl">🇯🇵 国内${best==='jp'?'<span class="btag">最大</span>':''}</div>
+          <div class="pnum ${pcls(jpP)}">${jpP!==null?sgn(jpP)+'¥'+fmt(jpP):'---'}</div>
+          <div class="pdetail">${jpDtl}</div>
+        </div>
+        <div class="ps${best==='us'?' best us-best':''}">
+          <div class="plbl">🌐 eBay${best==='us'?'<span class="btag us">最大</span>':''}</div>
+          <div class="pnum ${pcls(ebayP)}">${ebayP!==null?sgn(ebayP)+'¥'+fmt(ebayP):'---'}</div>
+          <div class="pdetail">${eDtl}</div>
+        </div>
+        </div>
+        <div class="ps${best==='direct'?' best us-best':''}">
+          <div class="plbl">🤝 直接取引${best==='direct'?'<span class="btag us">最大</span>':''}</div>
+          <div class="pnum ${pcls(directP)}">${directP!==null?sgn(directP)+'¥'+fmt(directP):'---'}</div>
+          <div class="pdetail">${dDtl}</div>
+        </div>
+        <div class="ps${best==='vt'?' best vt-best':''}">
+          <div class="plbl vu">🏦 Vault${best==='vt'?'<span class="btag vt">最大</span>':''}</div>
+          <div class="pnum ${pcls(vuP)}">${vuP!==null?sgn(vuP)+'¥'+fmt(vuP):'---'}</div>
+          <div class="pdetail">${vuDtl}</div>
+          ${vaultMinHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function render(){
+  const html=buildCards(), len=getList().length;
+  const jpW=cards.filter(c=>bestChannel(c)==='jp').length;
+  const usW=cards.filter(c=>bestChannel(c)==='us').length;
+  const vtW=cards.filter(c=>bestChannel(c)==='vt').length;
+  const profW=cards.filter(c=>bestProfit(c)>0).length;
+  const maxP=cards.length?Math.max(...cards.map(bestProfit)):-Infinity;
+  // ゲームフィルターを動的更新
+  refreshGameList();
+  const games = [...new Set(cards.map(c=>c.game).filter(Boolean))];
+  ['pc-cg','sp-cg'].forEach(cgId=>{
+    const cgEl = document.getElementById(cgId);
+    if(!cgEl) return;
+    const curV = cgEl.querySelector('.chip.active')?.dataset.v || 'all';
+    cgEl.innerHTML = '<button class="chip' + (curV==='all'?' active':'') + '" data-v="all">すべて</button>' +
+      games.map(g=>`<button class="chip${curV===g?' active':''}" data-v="${esc(g)}">${esc(g)}</button>`).join('');
+  });
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.innerHTML=v;};
+  set('pc-list',html); set('pc-cnt',len+'件'); set('pc-sjp',jpW+'件'); set('pc-sus',usW+'件');
+  set('sp-list',html); set('sp-cnt',len+'件');
+  set('sp-st-total',cards.length); set('sp-st-profit',profW);
+  set('sp-st-jp',jpW+'件'); set('sp-st-us',usW+'件'); set('sp-st-vt',vtW+'件');
+  set('sp-st-max',maxP>-Infinity?'+¥'+fmt(maxP):'---');
+  if(!isApplyingRemote) saveToStorage();
+}
+
+// 為替
+async function fetchRate(){
+  ['rval','sp-rval'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='...';});
+  for(const url of['https://api.exchangerate-api.com/v4/latest/USD','https://open.er-api.com/v6/latest/USD']){
+    try{
+      const d=await(await fetch(url)).json();
+      if(d.rates?.JPY){
+        rate=Math.round(d.rates.JPY*100)/100;
+        const t=new Date().toTimeString().slice(0,5);
+        ['rval','sp-rval'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=rate.toFixed(2);});
+        ['rtime','sp-rtime'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t+'更新';});
+        render(); return;
+      }
+    }catch(e){}
+  }
+  ['rval','sp-rval'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=rate.toFixed(2);});
+}
+
+
+
+function addCard(){
+  const name=getV('fn').trim();
+  if(!name){alert('カード名は必須です');return;}
+  const jp=gNum('fjp'),us=gNum('fus'),vault=gNum('fvault');
+  if(!jp&&!us&&!vault){alert('いずれかの販売価格を入力してください');return;}
+  const gfId=parseInt(getV('fgrading'))||null;
+  pushUndo(`カード追加：${name}`);
+  cards.unshift({id:nid++,name,game:getV('fg').trim()||'不明',set:getV('fs')||'-',grade:getV('fgr'),
+    purchase:gNum('fpurchase'),gradingFeeId:gfId,jp,us,vault,
+    jpUrl:getV('fjpu'),usUrl:getV('fusu'),vaultUrl:getV('fvaultu')});
+  ['fn','fs','fpurchase','fjp','fus','fvault','fjpu','fusu','fvaultu'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
+  const fg=document.getElementById('fgrading');if(fg)fg.value='';
+  render();
+}
+function addCardSp(){
+  const name=getV('sp-fn').trim();
+  if(!name){alert('カード名は必須です');return;}
+  const jp=gNum('sp-fjp'),us=gNum('sp-fus'),vault=gNum('sp-fvault');
+  if(!jp&&!us&&!vault){alert('いずれかの販売価格を入力してください');return;}
+  const gfId=parseInt(getV('sp-fgrading'))||null;
+  pushUndo(`カード追加：${name}`);
+  cards.unshift({id:nid++,name,game:getV('sp-fg').trim()||'不明',set:getV('sp-fs')||'-',grade:getV('sp-fgr'),
+    purchase:gNum('sp-fpurchase'),gradingFeeId:gfId,jp,us,vault,
+    jpUrl:getV('sp-fjpu'),usUrl:getV('sp-fusu'),vaultUrl:getV('sp-fvaultu')});
+  ['sp-fn','sp-fs','sp-fpurchase','sp-fjp','sp-fus','sp-fvault','sp-fjpu','sp-fusu','sp-fvaultu'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
+  const sfg=document.getElementById('sp-fgrading');if(sfg)sfg.value='';
+  render();
+  spTab('list',document.querySelector('.tab-btn'));
+}
+
+function openModal(id){
+  const c=cards.find(x=>x.id===id);if(!c)return;
+  editingId=id;
+  document.getElementById('m-game').value=c.game||'';
+  document.getElementById('m-grade').value=c.grade;
+  document.getElementById('m-name').value=c.name;
+  document.getElementById('m-set').value=c.set==='-'?'':c.set;
+  document.getElementById('m-purchase').value=c.purchase||'';
+  updateGradingSelect('m-grading', c.gradingFeeId);
+  updateCostBreakdown('m-cost-breakdown','m-purchase','m-grading');
+  document.getElementById('m-jp').value=c.jp||'';
+  document.getElementById('m-jpu').value=c.jpUrl||'';
+  document.getElementById('m-us').value=c.us||'';
+  document.getElementById('m-usu').value=c.usUrl||'';
+  document.getElementById('m-vault').value=c.vault||'';
+  document.getElementById('m-vaultu').value=c.vaultUrl||'';
+  // モーダルの取得ボタン表示切り替え
+  // カスタム手数料
+  const hasCF = !!c.customFee;
+  document.getElementById('m-fee-custom').checked = hasCF;
+  const panel = document.getElementById('m-fee-panel');
+  panel.classList.toggle('show', hasCF);
+  const cf = c.customFee || {};
+  const fill = (id, key, globalKey) => {
+    const el = document.getElementById(id);
+    if(el) el.value = cf[key] !== undefined ? cf[key] : getFee(globalKey);
+  };
+  fill('m-fee-jp',       'jp',      'fee-jp');
+  fill('m-fee-jp-tax',   'jp-tax',  'fee-jp-tax');
+  fill('m-fee-jp-ship',  'jp-ship', 'fee-jp-ship');
+  fill('m-fee-ebay',     'ebay',    'fee-ebay');
+  fill('m-fee-us-ship',     'us-ship',      'fee-us-ship');
+  fill('m-fee-rebate',      'rebate',       'fee-rebate');
+  fill('m-fee-grading-duty','grading-duty',  'fee-grading-duty');
+  fill('m-fee-direct-rate', 'direct-rate',   'fee-direct-rate');
+  fill('m-fee-direct',      'direct',        'fee-direct');
+  updateCostBreakdown('m-cost-breakdown','m-purchase','m-grading');
+  document.getElementById('overlay').classList.add('show');
+}
+function toggleCustomFee(){
+  const checked = document.getElementById('m-fee-custom').checked;
+  const panel = document.getElementById('m-fee-panel');
+  panel.classList.toggle('show', checked);
+  if(checked){
+    // グローバル値を初期値としてセット
+    const fill = (id, globalKey) => {
+      const el = document.getElementById(id);
+      if(el && !el.value) el.value = getFee(globalKey);
+    };
+    fill('m-fee-jp',      'fee-jp');
+    fill('m-fee-jp-tax',  'fee-jp-tax');
+    fill('m-fee-jp-ship', 'fee-jp-ship');
+    fill('m-fee-ebay',    'fee-ebay');
+    fill('m-fee-us-ship',      'fee-us-ship');
+    fill('m-fee-rebate',       'fee-rebate');
+    fill('m-fee-grading-duty', 'fee-grading-duty');
+    fill('m-fee-direct-rate',  'fee-direct-rate');
+    fill('m-fee-direct',       'fee-direct');
+  }
+}
+function closeModal(e){if(e.target===document.getElementById('overlay'))closeModalForce();}
+function closeModalForce(){document.getElementById('overlay').classList.remove('show');editingId=null;}
+function saveEdit(){
+  if(!editingId)return;
+  const idx=cards.findIndex(x=>x.id===editingId);if(idx===-1)return;
+  const name=getV('m-name').trim();if(!name){alert('カード名は必須です');return;}
+  const editTarget = cards.find(x=>x.id===editingId);
+  pushUndo(`カード編集：${editTarget?.name||''}`);
+  const useCustom = document.getElementById('m-fee-custom').checked;
+  const customFee = useCustom ? {
+    'jp':      gNum('m-fee-jp'),
+    'jp-tax':  gNum('m-fee-jp-tax'),
+    'jp-ship': gNum('m-fee-jp-ship'),
+    'ebay':    gNum('m-fee-ebay'),
+    'us-ship': gNum('m-fee-us-ship'),
+    'rebate':        gNum('m-fee-rebate'),
+    'grading-duty':  gNum('m-fee-grading-duty'),
+    'direct-rate':   gNum('m-fee-direct-rate'),
+    'direct':        gNum('m-fee-direct'),
+  } : null;
+  cards[idx]={...cards[idx],name,game:getV('m-game'),set:getV('m-set')||'-',grade:getV('m-grade'),
+    game:getV('m-game').trim()||'不明',purchase:gNum('m-purchase'),gradingFeeId:parseInt(getV('m-grading'))||null,jp:gNum('m-jp'),us:gNum('m-us'),vault:gNum('m-vault'),
+    jpUrl:getV('m-jpu'),usUrl:getV('m-usu'),vaultUrl:getV('m-vaultu'),customFee};
+  closeModalForce();render();
+}
+function deleteFromModal(){
+  if(!editingId||!confirm('削除しますか？'))return;
+  const delTarget=cards.find(x=>x.id===editingId);
+  pushUndo(`カード削除：${delTarget?.name||''}`);
+  cards=cards.filter(c=>c.id!==editingId);closeModalForce();render();
+}
+function openUrl(id){const url=getV(id);if(url&&url.startsWith('http'))window.open(url,'_blank','noopener');else alert('有効なURLを入力してください');}
+function setSort(mode,btn){
+  sortMode=mode;
+  document.querySelectorAll('.sb2').forEach(b=>{if(b.closest('.sort-row,.filter-scroll')===btn.closest('.sort-row,.filter-scroll'))b.classList.remove('active');});
+  btn.classList.add('active');render();
+}
+// ゲームdatalistを動的更新
+function refreshGameList(){
+  const dl = document.getElementById('game-list');
+  if(!dl) return;
+  const defaults = ['ポケモンカード','ワンピースカード'];
+  const custom = [...new Set(cards.map(c=>c.game).filter(g=>g&&!defaults.includes(g)))];
+  const all = [...defaults, ...custom];
+  dl.innerHTML = all.map(g=>`<option value="${esc(g)}">`).join('');
+}
+
+// ══ 鑑定費用マスタ管理 ══
+
+// 全セレクトボックスを更新
+function refreshGradingSelects(){
+  const selects = ['fgrading','sp-fgrading','m-grading'];
+  selects.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const cur = el.value;
+    el.innerHTML = '<option value="">なし（鑑定費用なし）</option>';
+    gradingFees.forEach(gf=>{
+      const opt = document.createElement('option');
+      opt.value = gf.id;
+      opt.textContent = `${gf.name}（¥${gf.price.toLocaleString()}）`;
+      el.appendChild(opt);
+    });
+    el.value = cur;
+  });
+  renderGradingMaster();
+}
+
+function updateGradingSelect(selectId, selectedId){
+  refreshGradingSelects();
+  const el = document.getElementById(selectId);
+  if(el && selectedId) el.value = selectedId;
+}
+
+// 鑑定費用マスタ一覧を描画
+function renderGradingMaster(){
+  ['pc-grading-master-list','sp-grading-master-list'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(!gradingFees.length){
+      el.innerHTML='<div style="font-size:12px;color:var(--mu);padding:4px 0;">まだ登録されていません</div>';
+      return;
+    }
+    el.innerHTML = gradingFees.map(gf=>`
+      <div class="grading-item">
+        <span class="grading-item-name">${esc(gf.name)}</span>
+        <span class="grading-item-price">¥${gf.price.toLocaleString()}</span>
+        <button class="grading-item-del" onclick="deleteGradingFee(${gf.id})" title="削除">✕</button>
+      </div>`).join('');
+  });
+}
+
+function addGradingFee(pfx){
+  const nameEl = document.getElementById(pfx+'-gname');
+  const priceEl = document.getElementById(pfx+'-gprice');
+  const name = nameEl?.value.trim();
+  const price = parseFloat(priceEl?.value)||0;
+  if(!name){ alert('名前を入力してください'); return; }
+  if(!price){ alert('金額を入力してください'); return; }
+  pushUndo(`鑑定費用追加：${name}`);
+  gradingFees.push({id: gradingNextId++, name, price});
+  if(nameEl) nameEl.value='';
+  if(priceEl) priceEl.value='';
+  refreshGradingSelects();
+}
+
+function deleteGradingFee(id){
+  if(!confirm('この鑑定費用を削除しますか？\n（登録済みカードへの適用は解除されます）')) return;
+  const delGf=gradingFees.find(g=>g.id===id);
+  pushUndo(`鑑定費用削除：${delGf?.name||''}`);
+  gradingFees = gradingFees.filter(g=>g.id!==id);
+  // 使用中のカードからも解除
+  cards.forEach(c=>{ if(c.gradingFeeId===id) c.gradingFeeId=null; });
+  refreshGradingSelects();
+  render();
+  saveToStorage();
+}
+
+// 仕入合計の内訳表示
+function updateCostBreakdown(targetId, purchaseId, gradingId){
+  const el = document.getElementById(targetId);
+  if(!el) return;
+  const purchase = parseFloat(document.getElementById(purchaseId)?.value)||0;
+  const gfId = parseInt(document.getElementById(gradingId)?.value)||null;
+  const gf = gradingFees.find(g=>g.id===gfId);
+  if(!purchase && !gf){ el.innerHTML=''; return; }
+  const gfPrice = gf ? gf.price : 0;
+  const total = purchase + gfPrice;
+  el.innerHTML = gf
+    ? `仕入 ¥${purchase.toLocaleString()} ＋ 鑑定（${esc(gf.name)}）¥${gfPrice.toLocaleString()} ＝ <strong>合計 ¥${total.toLocaleString()}</strong>`
+    : `仕入合計 ¥${total.toLocaleString()}`;
+}
+
+// ══ アンドゥ機能 ══
+const UNDO_MAX = 20; // 最大保持件数
+let undoStack = []; // [{cards, gradingFees, gradingNextId, nid, label}]
+
+function pushUndo(label) {
+  undoStack.push({
+    cards: JSON.parse(JSON.stringify(cards)),
+    gradingFees: JSON.parse(JSON.stringify(gradingFees)),
+    gradingNextId,
+    nid,
+    label,
+  });
+  if(undoStack.length > UNDO_MAX) undoStack.shift();
+  updateUndoBtn();
+}
+
+function undoAction() {
+  if(!undoStack.length) return;
+  const state = undoStack.pop();
+  cards = state.cards;
+  gradingFees = state.gradingFees;
+  gradingNextId = state.gradingNextId;
+  nid = state.nid;
+  refreshGradingSelects();
+  render();
+  updateUndoBtn();
+}
+
+function updateUndoBtn() {
+  const hasUndo = undoStack.length > 0;
+  const title = hasUndo
+    ? `取り消し：${undoStack[undoStack.length-1].label}`
+    : '取り消し（操作なし）';
+  ['pc-undo-btn','sp-undo-btn'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.title = title;
+    el.disabled = !hasUndo;
+    el.style.opacity = hasUndo ? '1' : '0.3';
+  });
+}
+
+// ══ エクスポート / インポート ══
+
+function exportData(){
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    cards: cards,
+    gradingFees: gradingFees,
+    gradingNextId: gradingNextId,
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tradecard-data-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      // カードデータ
+      if(Array.isArray(data.cards) && data.cards.length > 0){
+        const existing = cards.length;
+        if(existing > 0){
+          const mode = confirm(
+            `現在 ${existing}件のカードが登録されています。\n\n` +
+            `【OK】追加（既存データを残して追加）\n` +
+            `【キャンセル】上書き（既存データを削除して置き換え）`
+          );
+          if(mode){
+            // 追加: IDが重複しないよう調整
+            const maxId = Math.max(...cards.map(c=>c.id), 0);
+            const imported = data.cards.map((c,i) => ({...c, id: maxId + i + 1}));
+            cards = [...cards, ...imported];
+            nid = Math.max(...cards.map(c=>c.id)) + 1;
+          } else {
+            cards = data.cards;
+            nid = Math.max(...cards.map(c=>c.id), 0) + 1;
+          }
+        } else {
+          cards = data.cards;
+          nid = Math.max(...cards.map(c=>c.id), 0) + 1;
+        }
+      }
+
+      // 鑑定費用マスタ
+      if(Array.isArray(data.gradingFees) && data.gradingFees.length > 0){
+        gradingFees = data.gradingFees;
+        gradingNextId = data.gradingNextId || Math.max(...gradingFees.map(g=>g.id), 0) + 1;
+      }
+
+      refreshGradingSelects();
+      render();
+      saveToStorage();
+      alert(`✓ インポート完了！\n${data.cards?.length || 0}件のカードを読み込みました。`);
+    } catch(err){
+      alert('エラー: JSONファイルを読み込めませんでした。\n' + err.message);
+    }
+    // inputをリセット（同じファイルを再度選べるように）
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function setupFilter(id,isSell){
+  document.getElementById(id)?.addEventListener('click',e=>{
+    if(!e.target.classList.contains('chip'))return;
+    e.target.closest('.chips,.filter-scroll').querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    e.target.classList.add('active');
+    if(isSell)sellF=e.target.dataset.v;else gameF=e.target.dataset.v;
+    render();
+  });
+}
+['pc-cg','sp-cg'].forEach(id=>setupFilter(id,false));
+['pc-cs','sp-cs'].forEach(id=>setupFilter(id,true));
+function spTab(name,btn){
+  document.querySelectorAll('.sp-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sp-page-'+name)?.classList.add('active');
+  btn.classList.add('active');
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModalForce();});
+// ══ Firebase リアルタイム同期 ══
+const firebaseConfig = {
+  apiKey: "AIzaSyAkjE4lI7SJU46NQRupSYoLLbz7sNHP_v8",
+  authDomain: "tradingcard-hikaku.firebaseapp.com",
+  databaseURL: "https://tradingcard-hikaku-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tradingcard-hikaku",
+  storageBucket: "tradingcard-hikaku.firebasestorage.app",
+  messagingSenderId: "271477008725",
+  appId: "1:271477008725:web:d0c3a29531ad032abee7dc"
+};
+
+const fbApp = firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const DATA_PATH = 'data/main';
+
+// このタブ固有のID（自分の保存か他端末の変更かを区別するため）
+const MY_DEVICE_ID = 'dev_' + Math.random().toString(36).slice(2, 10);
+let lastSavedDeviceId = null; // 自分が最後に保存したdeviceId
+let saveTimer = null;
+
+function setSyncStatus(status, text){
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-text');
+  if(dot){ dot.className = 'sync-dot ' + status; }
+  if(txt){ txt.textContent = text; txt.style.color = status==='ok'?'var(--gn)':status==='syncing'?'var(--yw)':'var(--rd)'; }
+}
+
+function saveToStorage(){
+  // デバウンス: 連続操作時は800ms待ってからまとめて保存
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    setSyncStatus('syncing','保存中...');
+    lastSavedDeviceId = MY_DEVICE_ID; // 自分の保存IDを記録
+    const data = {
+      cards, gradingFees, gradingNextId, nid,
+      deviceId: MY_DEVICE_ID,  // どの端末が保存したか
+      updatedAt: Date.now()
+    };
+    db.ref(DATA_PATH).set(data)
+      .then(()=>{
+        const t = new Date().toTimeString().slice(0,5);
+        setSyncStatus('ok', t + ' 同期済み');
+      })
+      .catch(e=>{
+        setSyncStatus('err','保存失敗');
+        console.error(e);
+      });
+  }, 800);
+}
+
+// リアルタイムリスナー
+let isFirstLoad = true;
+db.ref(DATA_PATH).on('value', snapshot => {
+  const data = snapshot.val();
+
+  if(!data){
+    setSyncStatus('ok','データなし（新規）');
+    isFirstLoad = false;
+    return;
+  }
+
+  // ★ 自分の保存によるイベントは無視（ループ防止）
+  if(!isFirstLoad && data.deviceId === MY_DEVICE_ID){
+    return;
+  }
+
+  // データを反映
+  if(Array.isArray(data.cards)){
+    cards = data.cards;
+    nid = data.nid || Math.max(...cards.map(c=>c.id), 0) + 1;
+  }
+  if(Array.isArray(data.gradingFees) && data.gradingFees.length > 0){
+    gradingFees = data.gradingFees;
+    gradingNextId = data.gradingNextId || Math.max(...gradingFees.map(g=>g.id), 0) + 1;
+  }
+
+  if(isFirstLoad){
+    setSyncStatus('ok', '読み込み完了');
+    isFirstLoad = false;
+  } else {
+    const t = new Date().toTimeString().slice(0,5);
+    setSyncStatus('ok', t + ' 他端末から同期');
+  }
+
+  refreshGradingSelects();
+  // render()内でsaveToStorage()が呼ばれるが、
+  // saveToStorage はデバウンスされるので即時保存にはならない
+  // ただし他端末データ受信時はsaveしないよう一時フラグで制御
+  isApplyingRemote = true;
+  render();
+  isApplyingRemote = false;
+});
+
+// 接続状態監視
+db.ref('.info/connected').on('value', snap => {
+  if(!snap.val() && !isFirstLoad) setSyncStatus('err', 'オフライン');
+});
+
+// 他端末データ反映中フラグ（render内のsaveToStorageをスキップ）
+let isApplyingRemote = false;
+refreshGradingSelects();
+fetchRate();
+</script>
+<datalist id="game-list"><option value="ポケモンカード"><option value="ワンピースカード"></datalist>
+</body>
+</html>
